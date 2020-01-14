@@ -227,22 +227,99 @@ namespace BWJ.Collections
 
         protected virtual event PropertyChangedEventHandler PropertyChanged;
 
+        #region Collection alteration methods
         /// <summary>
-        /// Raises the PropertyChanged event
+        /// Removes all items in the collection
         /// </summary>
-        /// <param name="e">Event arguments</param>
-        protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
+        protected override void ClearItems()
         {
-            PropertyChanged?.Invoke(this, e);
+            AssertNotInEventHandler();
+
+            base.ClearItems();
+            OnClear();
+
+            if(!SuppressChangeNotification)
+            {
+                OnCountAndIndexerNameChanged();
+                OnCollectionReset();
+            }
         }
 
         /// <summary>
-        /// Raises the PropertyChanged event
+        /// Removes item at the specified index
         /// </summary>
-        protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
+        protected override void RemoveItem(int index)
         {
-            CollectionChanged(this, e);
+            AssertNotInEventHandler();
+
+            T removed = this[index];
+            base.RemoveItem(index);
+            OnRemove(removed);
+
+            if (!SuppressChangeNotification)
+            {
+                OnCountAndIndexerNameChanged();
+                OnInsertedOrRemovedItem(false, removed, index);
+            }
         }
+
+        /// <summary>
+        /// Inserts item into the collection at the specified index
+        /// </summary>
+        protected override void InsertItem(int index, T item)
+        {
+            AssertNotInEventHandler();
+
+            base.InsertItem(index, item);
+            OnInsert(item);
+
+            if (!SuppressChangeNotification)
+            {
+                OnCountAndIndexerNameChanged();
+                OnInsertedOrRemovedItem(true, item, index);
+            }
+        }
+
+        /// <summary>
+        /// Replaces the item currently at the given index with the given item
+        /// </summary>
+        protected override void SetItem(int index, T item)
+        {
+            AssertNotInEventHandler();
+
+            T old = this[index];
+            base.SetItem(index, item);
+            OnReplace(item, old);
+
+            if (!SuppressChangeNotification)
+            {
+                OnIndexerNameChanged();
+                OnReplacedItem(old, item, index);
+            }
+        }
+
+        /// <summary>
+        /// Removes the item at an index and reinserts it at another
+        /// </summary>
+        /// <param name="oldIndex">Current index of item being moved</param>
+        /// <param name="newIndex">New index for item</param>
+        protected virtual void MoveItem(int oldIndex, int newIndex)
+        {
+            AssertNotInEventHandler();
+
+            T item = this[oldIndex];
+
+            base.RemoveItem(oldIndex);
+            base.InsertItem(newIndex, item);
+            OnMove(item);
+
+            if (!SuppressChangeNotification)
+            {
+                OnIndexerNameChanged();
+                OnMovedItem(item, newIndex, oldIndex);
+            }
+        }
+        #endregion Collection alteration methods
 
         /// <summary>
         /// Throws an exception if there is an event handler in execution
@@ -282,7 +359,7 @@ namespace BWJ.Collections
             // and we are not suppressing change notifications
             if(raiseResetEvent && !raiseMultipleEventsOnLoad && !SuppressChangeNotification)
             {
-                RaiseCollectionReset();
+                OnCollectionReset();
             }
         }
 
@@ -301,57 +378,69 @@ namespace BWJ.Collections
             _OnRemove = onRemove;
         }
 
-        #region Collection change regulation
+        #region Raise event methods
         /// <summary>
-        /// Calls the <see cref="OnCollectionChanged(NotifyCollectionChangedEventArgs)"/> method
-        /// safely, ensuring that the collection has not been altered by another event handler
+        /// Raises the PropertyChanged event
         /// </summary>
         /// <param name="e">Event arguments</param>
-        private void RaiseCollectionChanged(NotifyCollectionChangedEventArgs e)
+        private void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            if (CollectionChanged != null)
+            PropertyChanged?.Invoke(this, e);
+        }
+        /// <summary>
+        /// Raises the CollectionChanged event
+        /// </summary>
+        /// <remarks>This method uses a counter to track invokations of event handlers.
+        /// This is necessary because we want to ensure that the collection is not altered
+        /// while event handlers are executing</remarks>
+        private void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
+        {
+            if (CollectionChanged == null) { return; }
+
+            lock (HandlerCountLock)
             {
-                lock (HandlerCountLock)
-                {
-                    HandlerCount++;
-                }
+                HandlerCount++;
+            }
 
-                OnCollectionChanged(e);
+            CollectionChanged(this, e);
 
-                lock (HandlerCountLock)
-                {
-                    HandlerCount--;
-                }
+            lock (HandlerCountLock)
+            {
+                HandlerCount--;
             }
         }
 
-        private object HandlerCountLock = new object();
-        private int HandlerCount = 0;
-        #endregion Collection change regulation
-
-        #region Raise event methods
-        private void RaisePropertyChanged(string propertyName)
+        private void OnCountChanged()
         {
-            OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
+            OnPropertyChanged(new PropertyChangedEventArgs("Count"));
+        }
+        private void OnIndexerNameChanged()
+        {
+            OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+        }
+        private void OnCountAndIndexerNameChanged()
+        {
+            OnCountChanged();
+            OnIndexerNameChanged();
         }
 
-        private void RaiseInsertOrRemoveItem(bool addItem, object item, int index)
+        private void OnInsertedOrRemovedItem(bool insertedItem, object item, int index)
         {
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(
-                addItem ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Remove,
+                insertedItem ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Remove,
                 item, index));
         }
-        private void RaiseMoveItem(object item, int index, int oldIndex)
+        private void OnMovedItem(object item, int index, int oldIndex)
         {
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move,
                 item, index, oldIndex));
         }
-        private void RaiseReplaceItem(object oldItem, object newItem, int index)
+        private void OnReplacedItem(object oldItem, object newItem, int index)
         {
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace,
                 newItem, oldItem, index));
         }
-        private void RaiseCollectionReset()
+        private void OnCollectionReset()
         {
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
@@ -386,6 +475,9 @@ namespace BWJ.Collections
 
         private bool _SuppressChangeNotification = false;
 
-        private string ChangeHookEx = "Utilization or removal of change event responders is not permitted on this instance";
+        private object HandlerCountLock = new object();
+        private int HandlerCount = 0;
+
+        private const string ChangeHookEx = "Utilization or removal of change event responders is not permitted on this instance";
     }
 }
