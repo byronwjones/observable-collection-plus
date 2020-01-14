@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BWJ.Collections
 {
@@ -106,6 +103,111 @@ namespace BWJ.Collections
 
                 _SuppressChangeNotification = value;
             }
+        }
+
+        /// <summary>
+        /// Move the item from a given index to a given index.
+        /// </summary>
+        /// <param name="currentIndex">Index where target item is currently located</param>
+        /// <param name="newIndex">Index to move target item to</param>
+        public void Move(int currentIndex, int newIndex)
+        {
+            MoveItem(currentIndex, newIndex);
+        }
+        /// <summary>
+        /// Move the first occurrence of the given item to the given index
+        /// </summary>
+        /// <param name="item">Item to move</param>
+        /// <param name="newIndex">Index to move item to</param>
+        /// <exception cref="ArgumentNullException">Item must not be null</exception>
+        /// <exception cref="ArgumentException">Item must exist in the collection</exception>
+        public void Move(T item, int newIndex)
+        {
+            if(item == null)
+            {
+                throw new ArgumentNullException("item");
+            }
+
+            var currentIndex = Items.IndexOf(item);
+            if(currentIndex < 0)
+            {
+                throw new ArgumentException("The item provided is not in the collection", "item");
+            }
+
+            MoveItem(currentIndex, newIndex);
+        }
+
+        /// <summary>
+        /// Replace the first occurence of the given item with the given replacement
+        /// </summary>
+        /// <param name="item">Item to replace</param>
+        /// <param name="replacement">Replacement item</param>
+        /// <exception cref="ArgumentNullException">Neither item nor replacement may be null</exception>
+        /// <exception cref="ArgumentException">Item must exist in the collection</exception>
+        public void Replace(T item, T replacement)
+        {
+            if (item == null)
+            {
+                throw new ArgumentNullException("item");
+            }
+            if (replacement == null)
+            {
+                throw new ArgumentNullException("replacement");
+            }
+
+            var index = Items.IndexOf(item);
+            if (index < 0)
+            {
+                throw new ArgumentException("The item provided is not in the collection", "item");
+            }
+
+            SetItem(index, replacement);
+        }
+
+        /// <summary>
+        /// Replaces every item matching the given predicate with the given replacement
+        /// </summary>
+        /// <returns>The items replaced</returns>
+        /// <exception cref="ArgumentNullException">Neither predicate nor replacement may be null</exception>
+        public List<T> Replace(Func<T, bool> predicate, T replacement)
+        {
+            if (predicate == null)
+            {
+                throw new ArgumentNullException("predicate");
+            }
+            if (replacement == null)
+            {
+                throw new ArgumentNullException("replacement");
+            }
+
+            var targets = FilterCollection(predicate);
+            foreach(var item in targets)
+            {
+                Replace(item, replacement);
+            }
+
+            return targets;
+        }
+
+        /// <summary>
+        /// Removes every item matching the given predicate from the collection
+        /// </summary>
+        /// <returns>The items removed</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public List<T> RemoveWhere(Func<T, bool> predicate)
+        {
+            if (predicate == null)
+            {
+                throw new ArgumentNullException("predicate");
+            }
+
+            var targets = FilterCollection(predicate);
+            foreach (var item in targets)
+            {
+                Remove(item);
+            }
+
+            return targets;
         }
 
         #region Change event hooks
@@ -301,22 +403,22 @@ namespace BWJ.Collections
         /// <summary>
         /// Removes the item at an index and reinserts it at another
         /// </summary>
-        /// <param name="oldIndex">Current index of item being moved</param>
+        /// <param name="currentIndex">Current index of item being moved</param>
         /// <param name="newIndex">New index for item</param>
-        protected virtual void MoveItem(int oldIndex, int newIndex)
+        protected virtual void MoveItem(int currentIndex, int newIndex)
         {
             AssertNotInEventHandler();
 
-            T item = this[oldIndex];
+            T item = this[currentIndex];
 
-            base.RemoveItem(oldIndex);
+            base.RemoveItem(currentIndex);
             base.InsertItem(newIndex, item);
             OnMove(item);
 
             if (!SuppressChangeNotification)
             {
                 OnIndexerNameChanged();
-                OnMovedItem(item, newIndex, oldIndex);
+                OnMovedItem(item, newIndex, currentIndex);
             }
         }
         #endregion Collection alteration methods
@@ -445,6 +547,21 @@ namespace BWJ.Collections
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
         #endregion Raise event methods
+
+        private List<T> FilterCollection(Func<T, bool> predicate)
+        {
+            var subset = new List<T>();
+
+            foreach(var item in Items)
+            {
+                if(predicate(item))
+                {
+                    subset.Add(item);
+                }
+            }
+
+            return subset;
+        }
 
         private bool DisallowChangeResponders
         {
