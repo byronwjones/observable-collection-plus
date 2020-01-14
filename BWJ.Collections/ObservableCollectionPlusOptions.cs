@@ -17,19 +17,13 @@ namespace BWJ.Collections
         Default = 0,
 
         /// <summary>
-        /// During invokation of Load, fire change event when the collection is cleared, and on each
-        ///    individual addition to the collection
-        /// </summary>
-        FireMultipleEventsOnLoad = 1,
-
-        /// <summary>
         /// Do not allow assignment/removal of methods invoked at collection changes after instanciation
         /// </summary>
-        DisallowChangeResponders = 1 << 1,
+        DisallowChangeResponders = 1,
 
         /// <summary>
         /// Do not allow suspension of normal change event firing
         /// </summary>
-        DisallowEventSuppression = 1 << 2
+        DisallowNotificationSuppression = 1 << 1
     }
 }
