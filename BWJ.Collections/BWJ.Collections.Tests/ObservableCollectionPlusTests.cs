@@ -194,5 +194,68 @@ namespace BWJ.Collections.Tests
             Assert.AreEqual("banana", newItem);
         }
         #endregion Item Replacement
+
+        #region Item Removal
+        [TestMethod]
+        public void Test_RemoveCollectionItem()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (new List<string> { "foo", "bar", "baz" });
+
+            collection.Remove("bar");
+
+            Assert.AreEqual("foo,baz", string.Join(",", collection));
+        }
+        
+        [TestMethod]
+        public void Test_RemoveCollectionItemByPredicate()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (new List<string> { "foo", "bar", "baz" });
+
+            collection.RemoveWhere(s => s[0] == 'b');
+
+            Assert.AreEqual("foo", string.Join(",", collection));
+        }
+        
+        [TestMethod]
+        public void Test_FireEventOnItemRemoval()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (new List<string> { "foo", "bar", "baz" });
+            NotifyCollectionChangedAction action = NotifyCollectionChangedAction.Reset;
+            string removed = null;
+            collection.CollectionChanged += (sender, e) => {
+                action = e.Action;
+                removed = (string)e.OldItems[0];
+            };
+
+            collection.RemoveAt(1);
+
+            Assert.AreEqual(NotifyCollectionChangedAction.Remove, action);
+            Assert.AreEqual("bar", removed);
+        }
+        
+        [TestMethod]
+        public void Test_InvokeResponderOnItemRemoval()
+        {
+            string removed = null;
+            Action<string> responder = (r) => {
+                removed = r;
+            };
+            var collection = new ObservableCollectionPlus<string>(
+                new List<string> { "foo", "bar", "baz" },
+                ObservableCollectionPlusOptions.Default,
+                onClear: null,
+                onInsert: null,
+                onMove: null,
+                onReplace: null,
+                onRemove: responder);
+
+            collection.RemoveAt(1);
+
+            Assert.AreEqual("bar", removed);
+        }
+        #endregion Item Removal
     }
 }
