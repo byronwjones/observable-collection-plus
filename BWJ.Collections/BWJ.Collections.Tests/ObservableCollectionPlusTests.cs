@@ -8,6 +8,7 @@ namespace BWJ.Collections.Tests
     [TestClass]
     public class ObservableCollectionPlusTests
     {
+        #region Item Insertion
         [TestMethod]
         public void Test_AddItemToCollection()
         {
@@ -51,8 +52,9 @@ namespace BWJ.Collections.Tests
 
             Assert.AreEqual("test", item);
         }
+        #endregion Item Insertion
 
-
+        #region Item Translation
         [TestMethod]
         public void Test_MoveCollectionItemByIndex()
         {
@@ -114,5 +116,83 @@ namespace BWJ.Collections.Tests
 
             Assert.AreEqual("foo", item);
         }
+        #endregion Item Translation
+
+        #region Item Replacement
+        [TestMethod]
+        public void Test_ReplaceCollectionItemByIndex()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (new List<string> { "foo", "bar", "baz" });
+
+            collection[1] = "spartacus";
+
+            Assert.AreEqual("foo,spartacus,baz", string.Join(",", collection));
+        }
+
+        [TestMethod]
+        public void Test_ReplaceCollectionItemByRef()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (new List<string> { "foo", "bar", "baz" });
+
+            collection.Replace("bar", "spartacus");
+
+            Assert.AreEqual("foo,spartacus,baz", string.Join(",", collection));
+        }
+
+        [TestMethod]
+        public void Test_ReplaceCollectionItemByPredicate()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (new List<string> { "foo", "bar", "baz" });
+
+            collection.Replace(s => s[1] == 'o', "horse");
+
+            Assert.AreEqual("horse,bar,baz", string.Join(",", collection));
+        }
+
+        [TestMethod]
+        public void Test_FireEventOnItemReplacement()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (new List<string> { "foo", "bar", "baz" });
+            NotifyCollectionChangedAction action = NotifyCollectionChangedAction.Reset;
+            string oldItem = null, newItem = null;
+            collection.CollectionChanged += (sender, e) => {
+                action = e.Action;
+                oldItem = (string)e.OldItems[0];
+                newItem = (string)e.NewItems[0];
+            };
+
+            collection[1] = "spartacus";
+
+            Assert.AreEqual(NotifyCollectionChangedAction.Replace, action);
+            Assert.AreEqual("bar", oldItem);
+            Assert.AreEqual("spartacus", newItem);
+        }
+
+        [TestMethod]
+        public void Test_InvokeResponderOnItemReplacement()
+        {
+            string oldItem = null, newItem = null;
+            Action<string, string> responder = (nu, old) => {
+                oldItem = old;
+                newItem = nu;
+            };
+            var collection = new ObservableCollectionPlus<string>(
+                new List<string> { "foo", "bar", "baz" },
+                ObservableCollectionPlusOptions.Default,
+                onClear: null,
+                onInsert: null,
+                onMove: null,
+                onReplace: responder);
+
+            collection[0] = "banana";
+
+            Assert.AreEqual("foo", oldItem);
+            Assert.AreEqual("banana", newItem);
+        }
+        #endregion Item Replacement
     }
 }
