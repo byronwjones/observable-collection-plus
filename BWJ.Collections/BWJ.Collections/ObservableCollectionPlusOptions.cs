@@ -24,6 +24,13 @@ namespace BWJ.Collections
         /// <summary>
         /// Do not allow suspension of normal change event firing
         /// </summary>
-        DisallowNotificationSuppression = 1 << 1
+        DisallowNotificationSuppression = 1 << 1,
+
+        /// <summary>
+        /// Do not automatically subscribe to PropertyChanged event on collection items when 
+        /// item type T implements INotifyPropertyChanged with a publicly accessible 
+        /// PropertyChanged event
+        /// </summary>
+        DisableAutoPropertyChangedSubscription = 1 << 2,
     }
 }

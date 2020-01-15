@@ -41,7 +41,7 @@ namespace BWJ.Collections
         /// <param name="onMove">Action invoked when an item in this collection is moved</param>
         /// <param name="onRemove">Action invoked when an item is removed from this collection</param>
         public ObservableCollectionPlus(ObservableCollectionPlusOptions config,
-            Action onClear = null,
+            Action<IList<T>> onClear = null,
             Action<T> onInsert = null,
             Action<T> onMove = null,
             Action<T, T> onReplace = null,
@@ -62,7 +62,7 @@ namespace BWJ.Collections
         /// <param name="onRemove">Action invoked when an item is removed from this collection</param>
         public ObservableCollectionPlus(IEnumerable<T> collection,
             ObservableCollectionPlusOptions config,
-            Action onClear = null,
+            Action<IList<T>> onClear = null,
             Action<T> onInsert = null,
             Action<T> onMove = null,
             Action<T, T> onReplace = null,
@@ -89,20 +89,6 @@ namespace BWJ.Collections
         public void Load(IEnumerable<T> collection, bool raiseMultipleEventsOnLoad = false)
         {
             Load(collection, true, raiseMultipleEventsOnLoad);
-        }
-
-        public bool SuppressChangeNotification
-        {
-            get { return _SuppressChangeNotification; }
-            set
-            {
-                if(value && DisallowNotificationSuppression)
-                {
-                    throw new InvalidOperationException("Change notification suppression is not permitted on this instance");
-                }
-
-                _SuppressChangeNotification = value;
-            }
         }
 
         /// <summary>
@@ -210,15 +196,30 @@ namespace BWJ.Collections
             return targets;
         }
 
+
+        public bool SuppressChangeNotification
+        {
+            get { return _SuppressChangeNotification; }
+            set
+            {
+                if (value && DisallowNotificationSuppression)
+                {
+                    throw new InvalidOperationException("Change notification suppression is not permitted on this instance");
+                }
+
+                _SuppressChangeNotification = value;
+            }
+        }
+
         #region Change event hooks
         /// <summary>
         /// An action invoked after the collection is cleared, but before a collection changed event is fired
         /// </summary>
-        public Action OnClear
+        public Action<IList<T>> OnClear
         {
             get
             {
-                return _OnClear ?? DoNothing;
+                return _OnClear ?? DoNothingWithList;
             }
             set
             {
@@ -237,7 +238,7 @@ namespace BWJ.Collections
         {
             get
             {
-                return _OnInsert ?? DoNothingWithArg;
+                return _OnInsert ?? DoNothingWithItem;
             }
             set
             {
@@ -256,7 +257,7 @@ namespace BWJ.Collections
         {
             get
             {
-                return _OnMove ?? DoNothingWithArg;
+                return _OnMove ?? DoNothingWithItem;
             }
             set
             {
@@ -296,7 +297,7 @@ namespace BWJ.Collections
         {
             get
             {
-                return _OnRemove ?? DoNothingWithArg;
+                return _OnRemove ?? DoNothingWithItem;
             }
             set
             {
@@ -327,6 +328,11 @@ namespace BWJ.Collections
         public virtual event NotifyCollectionChangedEventHandler CollectionChanged;
         #endregion Interface implementation
 
+        /// <summary>
+        /// Raised when an item in this collection raises PropertyChanged
+        /// </summary>
+        public virtual event PropertyChangedEventHandler ItemPropertyChanged;
+
         protected virtual event PropertyChangedEventHandler PropertyChanged;
 
         #region Collection alteration methods
@@ -337,8 +343,16 @@ namespace BWJ.Collections
         {
             AssertNotInEventHandler();
 
+            T[] items = new T[Count];
+            CopyTo(items, 0);
+
             base.ClearItems();
-            OnClear();
+
+            if(!DisableAutoPropertyChangedSubscription)
+            {
+                UnsubscribeFromItemEvents(items);
+            }
+            OnClear(items);
 
             if(!SuppressChangeNotification)
             {
@@ -356,6 +370,11 @@ namespace BWJ.Collections
 
             T removed = this[index];
             base.RemoveItem(index);
+
+            if(!DisableAutoPropertyChangedSubscription)
+            {
+                UnsubscribeFromItemEvents(removed);
+            }
             OnRemove(removed);
 
             if (!SuppressChangeNotification)
@@ -373,6 +392,11 @@ namespace BWJ.Collections
             AssertNotInEventHandler();
 
             base.InsertItem(index, item);
+
+            if(!DisableAutoPropertyChangedSubscription)
+            {
+                SubscribeToItemEvents(item);
+            }
             OnInsert(item);
 
             if (!SuppressChangeNotification)
@@ -391,6 +415,12 @@ namespace BWJ.Collections
 
             T old = this[index];
             base.SetItem(index, item);
+
+            if(!DisableAutoPropertyChangedSubscription)
+            {
+                UnsubscribeFromItemEvents(old);
+                SubscribeToItemEvents(item);
+            }
             OnReplace(item, old);
 
             if (!SuppressChangeNotification)
@@ -466,13 +496,27 @@ namespace BWJ.Collections
         }
 
         private void ConfigureInstance(ObservableCollectionPlusOptions config,
-            Action onClear,
+            Action<IList<T>> onClear,
             Action<T> onInsert,
             Action<T> onMove,
             Action<T, T> onReplace,
             Action<T> onRemove)
         {
             Options = config;
+
+            // determine if we can/should automatically subscribe to PropertyChanged events on items
+            if(!DisableAutoPropertyChangedSubscription)
+            {
+                // generic type T must implement INotifyPropertyChanged and
+                // have a publicly accessible PropertyChanged property
+                var itemType = typeof(T);
+                if((itemType.GetInterface("INotifyPropertyChanged", true) == null) ||
+                    (itemType.GetProperty("PropertyChanged") == null))
+                {
+                    Options |= ObservableCollectionPlusOptions.DisableAutoPropertyChangedSubscription;
+                }
+            }
+
             _OnClear = onClear;
             _OnInsert = onInsert;
             _OnMove = onMove;
@@ -489,10 +533,20 @@ namespace BWJ.Collections
         {
             PropertyChanged?.Invoke(this, e);
         }
+
+        /// <summary>
+        /// Raises the ItemPropertyChanged event when a PropertyChanged event is raised on a collection
+        /// item
+        /// </summary>
+        /// <param name="e">Event arguments</param>
+        private void OnItemPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            ItemPropertyChanged?.Invoke(sender, e);
+        }
         /// <summary>
         /// Raises the CollectionChanged event
         /// </summary>
-        /// <remarks>This method uses a counter to track invokations of event handlers.
+        /// <remarks>This method uses a counter to track invocations of event handlers.
         /// This is necessary because we want to ensure that the collection is not altered
         /// while event handlers are executing</remarks>
         private void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
@@ -546,6 +600,24 @@ namespace BWJ.Collections
         {
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
+
+        private void SubscribeToItemEvents(T item)
+        {
+            if (item == null) { return; }
+            ((INotifyPropertyChanged)item).PropertyChanged += OnItemPropertyChanged;
+        }
+        private void UnsubscribeFromItemEvents(T item)
+        {
+            if(item == null) { return; }
+            ((INotifyPropertyChanged)item).PropertyChanged -= OnItemPropertyChanged;
+        }
+        private void UnsubscribeFromItemEvents(IList<T> items)
+        {
+            foreach(var item in items)
+            {
+                UnsubscribeFromItemEvents(item);
+            }
+        }
         #endregion Raise event methods
 
         private List<T> FilterCollection(Func<T, bool> predicate)
@@ -579,12 +651,20 @@ namespace BWJ.Collections
                     ObservableCollectionPlusOptions.DisallowNotificationSuppression;
             }
         }
+        private bool DisableAutoPropertyChangedSubscription
+        {
+            get
+            {
+                return (ObservableCollectionPlusOptions.DisableAutoPropertyChangedSubscription & Options) ==
+                    ObservableCollectionPlusOptions.DisableAutoPropertyChangedSubscription;
+            }
+        }
 
         private ObservableCollectionPlusOptions Options = ObservableCollectionPlusOptions.Default;
 
-        private Action DoNothing = () => { };
-        private Action<T> DoNothingWithArg = (t) => { };
-        private Action _OnClear = null;
+        private Action<IList<T>> DoNothingWithList = (l) => { };
+        private Action<T> DoNothingWithItem = (t) => { };
+        private Action<IList<T>> _OnClear = null;
         private Action<T> _OnInsert = null;
         private Action<T> _OnMove = null;
         private Action<T,T> _OnReplace = null;
