@@ -16,7 +16,10 @@ namespace BWJ.Collections
     public class ObservableCollectionPlus<T> : Collection<T>, INotifyCollectionChanged, INotifyPropertyChanged
     {
         #region Ctors
-        public ObservableCollectionPlus() : base() { }
+        public ObservableCollectionPlus() : base()
+        {
+            ConfigureInstance(ObservableCollectionPlusOptions.Default, null, null, null, null, null);
+        }
 
         /// <summary>
         /// Initialization of the collection with a dataset
@@ -29,6 +32,7 @@ namespace BWJ.Collections
                 throw new ArgumentNullException("collection");
             }
 
+            ConfigureInstance(ObservableCollectionPlusOptions.Default, null, null, null, null, null);
             Load(collection);
         }
 
