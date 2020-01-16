@@ -584,18 +584,18 @@ namespace BWJ.Collections
             OnIndexerNameChanged();
         }
 
-        private void OnInsertedOrRemovedItem(bool insertedItem, object item, int index)
+        private void OnInsertedOrRemovedItem(bool insertedItem, T item, int index)
         {
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(
                 insertedItem ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Remove,
                 item, index));
         }
-        private void OnMovedItem(object item, int index, int oldIndex)
+        private void OnMovedItem(T item, int index, int oldIndex)
         {
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move,
                 item, index, oldIndex));
         }
-        private void OnReplacedItem(object oldItem, object newItem, int index)
+        private void OnReplacedItem(T oldItem, T newItem, int index)
         {
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace,
                 newItem, oldItem, index));

@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Specialized;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BWJ.Collections.Tests
 {
@@ -257,5 +258,102 @@ namespace BWJ.Collections.Tests
             Assert.AreEqual("bar", removed);
         }
         #endregion Item Removal
+
+        #region Clear All Items
+        [TestMethod]
+        public void Test_ClearCollection()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (new List<string> { "foo", "bar", "baz" });
+
+            collection.Clear();
+
+            Assert.AreEqual(0, collection.Count);
+        }
+        
+        [TestMethod]
+        public void Test_FireEventOnCollectionCleared()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (new List<string> { "foo", "bar", "baz" });
+            NotifyCollectionChangedAction action = NotifyCollectionChangedAction.Add;
+            collection.CollectionChanged += (sender, e) => {
+                action = e.Action;
+            };
+
+            collection.Clear();
+
+            Assert.AreEqual(NotifyCollectionChangedAction.Reset, action);
+        }
+        
+        [TestMethod]
+        public void Test_InvokeResponderOnCollectionCleared()
+        {
+            string items = null;
+            Action<IList<string>> responder = (s) => {
+                items = string.Join(",", s);
+            };
+            var collection = new ObservableCollectionPlus<string>(
+                new List<string> { "foo", "bar", "baz" },
+                ObservableCollectionPlusOptions.Default,
+                onClear: responder);
+
+            collection.Clear();
+
+            Assert.AreEqual("foo,bar,baz", items);
+        }
+        #endregion Clear All Items
+
+        #region Load New Collection
+        [TestMethod]
+        public void Test_LoadCollection()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (new List<string> { "a", "b", "c" });
+
+            collection.Load(new List<string> { "x", "y", "z" });
+
+            Assert.AreEqual("x,y,z", string.Join(",", collection));
+        }
+        
+        [TestMethod]
+        public void Test_FireOneEventOnLoad()
+        {
+            var collection = new ObservableCollectionPlus<string>();
+            var events = new List<NotifyCollectionChangedAction>();
+            collection.CollectionChanged += (sender, e) => {
+                events.Add(e.Action);
+            };
+
+            collection.Load(new List<string> { "a", "b", "c" });
+
+            Assert.AreEqual(1, events.Count);
+            Assert.AreEqual(NotifyCollectionChangedAction.Reset, events[0]);
+        }
+
+        [TestMethod]
+        public void Test_FireMultipleEventsOnLoad()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (new List<string> { "a", "b", "c" });
+            var events = new List<NotifyCollectionChangedAction>();
+            int resetEventCount = 0;
+            int addEventCount = 0;
+            collection.CollectionChanged += (sender, e) => {
+                events.Add(e.Action);
+            };
+
+            collection.Load(new List<string> { "x", "y", "z" }, raiseMultipleEventsOnLoad: true);
+            resetEventCount = events.Count(e => e == NotifyCollectionChangedAction.Reset);
+            addEventCount = events.Count(e => e == NotifyCollectionChangedAction.Add);
+
+            // should raise 4 events total:
+            //     - 1 reset collection event
+            //     - 3 add item events
+            Assert.AreEqual(4, events.Count);
+            Assert.AreEqual(1, resetEventCount);
+            Assert.AreEqual(3, addEventCount);
+        }
+        #endregion Load New Collection
     }
 }
