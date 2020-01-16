@@ -9,6 +9,35 @@ namespace BWJ.Collections.Tests
     [TestClass]
     public class ObservableCollectionPlusTests
     {
+        #region Configuration
+        [TestMethod]
+        public void Test_DisallowNotificationSuppression()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (ObservableCollectionPlusOptions.DisallowNotificationSuppression);
+
+            Action act = () => {
+                collection.SuppressChangeNotification = true;
+            };
+
+            Assert.ThrowsException<InvalidOperationException>(act);
+        }
+
+        [TestMethod]
+        public void Test_DisallowSettingChangeRespondersAfterInstanciation()
+        {
+            var collection = new ObservableCollectionPlus<string>
+                (ObservableCollectionPlusOptions.DisallowChangeResponders,
+                onClear: (l) => { });
+
+            Action act = () => {
+                collection.OnInsert = (i) => { };
+            };
+
+            Assert.ThrowsException<InvalidOperationException>(act);
+        }
+        #endregion Configuration
+
         #region Item Insertion
         [TestMethod]
         public void Test_AddItemToCollection()
@@ -417,5 +446,48 @@ namespace BWJ.Collections.Tests
             Assert.AreEqual("AB", notifications);
         }
         #endregion Item Property Change Notification
+
+        [TestMethod]
+        public void Test_SuppressNotifications()
+        {
+            var objA = new InpcObject();
+            var objB = new InpcObject();
+            int notifications = 0;
+            var collection = new ObservableCollectionPlus<InpcObject>();
+            collection.ItemPropertyChanged += (sender, e) => {
+                notifications++;
+            };
+            collection.CollectionChanged += (sender, e) => {
+                notifications++;
+            };
+
+            collection.Load(new List<InpcObject> { objA });
+            collection.SuppressChangeNotification = true;
+            collection.Add(objB);
+            objA.A = 1;
+            collection.SuppressChangeNotification = false;
+            objB.B = 2;
+
+            Assert.AreEqual(2, notifications);
+        }
+
+        [TestMethod]
+        public void Test_NoCollectionChangesAllowedInCollectionChangedHandler()
+        {
+            var objA = new InpcObject();
+            var objB = new InpcObject();
+            var objC = new InpcObject();
+            var collection = new ObservableCollectionPlus<InpcObject>
+                (new List<InpcObject> { objA });
+            collection.CollectionChanged += (sender, e) => {
+                collection.Add(objC);
+            };
+
+            Action act = () => {
+                collection.Add(objB);
+            };
+
+            Assert.ThrowsException<InvalidOperationException>(act);
+        }
     }
 }

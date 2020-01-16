@@ -200,7 +200,10 @@ namespace BWJ.Collections
             return targets;
         }
 
-
+        /// <summary>
+        /// Prevents the <see cref="CollectionChanged"/> and
+        /// <see cref="ItemPropertyChanged"/> events from being raised when set to true
+        /// </summary>
         public bool SuppressChangeNotification
         {
             get { return _SuppressChangeNotification; }
@@ -543,9 +546,14 @@ namespace BWJ.Collections
         /// item
         /// </summary>
         /// <param name="e">Event arguments</param>
+        /// <remarks>While <see cref="SuppressChangeNotification"/> is true, neither the 
+        /// CollectionChanged nor the ItemPropertyChanged events are raised</remarks>
         private void OnItemPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            ItemPropertyChanged?.Invoke(sender, e);
+            if(!SuppressChangeNotification)
+            {
+                ItemPropertyChanged?.Invoke(sender, e);
+            }
         }
         /// <summary>
         /// Raises the CollectionChanged event
