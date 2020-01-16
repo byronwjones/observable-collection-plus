@@ -514,8 +514,8 @@ namespace BWJ.Collections
                 // generic type T must implement INotifyPropertyChanged and
                 // have a publicly accessible PropertyChanged property
                 var itemType = typeof(T);
-                if((itemType.GetInterface("INotifyPropertyChanged", true) == null) ||
-                    (itemType.GetProperty("PropertyChanged") == null))
+                if ((itemType.GetInterface("INotifyPropertyChanged", true) == null) ||
+                    (itemType.GetEvent("PropertyChanged") == null))
                 {
                     Options |= ObservableCollectionPlusOptions.DisableAutoPropertyChangedSubscription;
                 }

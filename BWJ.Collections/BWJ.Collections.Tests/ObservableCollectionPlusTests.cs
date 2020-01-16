@@ -355,5 +355,67 @@ namespace BWJ.Collections.Tests
             Assert.AreEqual(3, addEventCount);
         }
         #endregion Load New Collection
+
+        #region Item Property Change Notification
+        [TestMethod]
+        public void Test_AutomaticItemPropertyChangeNotification()
+        {
+            var objA = new InpcObject();
+            var objB = new InpcObject();
+            string notifications = string.Empty;
+            var collection = new ObservableCollectionPlus<InpcObject>
+                (new List<InpcObject> { objA });
+            collection.ItemPropertyChanged += (sender, e) => {
+                notifications += e.PropertyName;
+            };
+            collection.Add(objB);
+
+            objA.A = 1;
+            objB.B = 2;
+            objB.C = 3;
+
+            Assert.AreEqual("ABC", notifications);
+        }
+
+        [TestMethod]
+        public void Test_DisableAutomaticItemPropertyChangeNotification()
+        {
+            var objA = new InpcObject();
+            var objB = new InpcObject();
+            string notifications = string.Empty;
+            var collection = new ObservableCollectionPlus<InpcObject> (
+                new List<InpcObject> { objA },
+                ObservableCollectionPlusOptions.DisableAutoPropertyChangedSubscription);
+            collection.ItemPropertyChanged += (sender, e) => {
+                notifications += e.PropertyName;
+            };
+            collection.Add(objB);
+
+            objA.A = 1;
+            objB.B = 2;
+
+            Assert.AreEqual(string.Empty, notifications);
+        }
+
+        [TestMethod]
+        public void Test_AutomaticUnsubscribeFromRemovedItemPropertyChanges()
+        {
+            var objA = new InpcObject();
+            var objB = new InpcObject();
+            string notifications = string.Empty;
+            var collection = new ObservableCollectionPlus<InpcObject>
+                (new List<InpcObject> { objA, objB });
+            collection.ItemPropertyChanged += (sender, e) => {
+                notifications += e.PropertyName;
+            };
+
+            objA.A = 1;
+            objB.B = 2;
+            collection.Remove(objB);
+            objB.C = 4;
+
+            Assert.AreEqual("AB", notifications);
+        }
+        #endregion Item Property Change Notification
     }
 }
