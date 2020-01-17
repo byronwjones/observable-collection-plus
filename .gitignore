@@ -3,6 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Nuget
+*.nupkg
+nuget.exe
+
+
 # User-specific files
 *.rsuser
 *.suo
@@ -74,6 +79,8 @@ StyleCopReport.xml
 *.iobj
 *.pch
 *.pdb
+# Preserve *.pdb in version downloads folder
+!versions/**/*.pdb
 *.ipdb
 *.pgc
 *.pgd

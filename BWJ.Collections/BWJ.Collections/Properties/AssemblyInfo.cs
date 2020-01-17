@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("BWJ.Collections")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("ObservableCollectionPlus")]
+[assembly: AssemblyDescription("A flexible Collection implementing INotifyPropertyChanged with automatic item change detection")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("BWJ.Collections")]
+[assembly: AssemblyCompany("Byron W Jones LLC")]
+[assembly: AssemblyProduct("ObservableCollectionPlus")]
 [assembly: AssemblyCopyright("Copyright ©  2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

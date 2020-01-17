@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+  <metadata>
+    <id>BWJ.Collections.ObservableCollectionPlus</id>
+    <title>ObservableCollectionPlus</title>
+    <version>1.0.0</version>
+    <authors>Byron W Jones</authors>
+    <owners>Byron W Jones</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/byronwjones/observable-collection-plus</projectUrl>
+    <repository type="git" url="https://github.com/byronwjones/observable-collection-plus.git" branch="master" commit="e1c65e4524cd70ee6e22abe33e6cb6ec73938cb3" />
+    <description>A flexible, highly-performant Collection implementing INotifyPropertyChanged and ICollectionChanged that can automatically detect changes to itself and the properties of its Items without any configuration</description>
+    <summary>A flexible, highly-performant Collection implementing INotifyPropertyChanged with automatic item property change detection</summary>
+    <releaseNotes>Initial Release.</releaseNotes>
+    <copyright>Copyright 2020 Byron W Jones LLC</copyright>
+    <tags>ObservableCollection INotifyPropertyChanged ICollectionChanged Collection Wpf</tags>
+    <dependencies>
+      <group targetFramework=".NETFramework4.5">
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\BWJ.Collections\bin\Release\**" target="lib\net45" />
+    <file src="readme.txt" target="" />
+  </files>
+</package>

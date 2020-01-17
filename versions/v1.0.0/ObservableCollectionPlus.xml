@@ -1,0 +1,212 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ObservableCollectionPlus</name>
+    </assembly>
+    <members>
+        <member name="T:BWJ.Collections.ObservableCollectionPlus`1">
+            <summary>
+            An object collection implementing INotifyPropertyChanged and INotifyCollectionChanged.
+            Very similar in functionality to ObservableCollection, with some variation in
+            how multithreading scenarios are managed and most importantly, the ability to reload the instance
+            with a distinct set of data without firing events several times
+            </summary>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.#ctor(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Initialization of the collection with a dataset
+            </summary>
+            <param name="collection">The initial dataset managed by this collection</param>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.#ctor(BWJ.Collections.ObservableCollectionPlusOptions,System.Action{System.Collections.Generic.IList{`0}},System.Action{`0},System.Action{`0},System.Action{`0,`0},System.Action{`0})">
+            <summary>
+            Initialization of the collection with configuration arguments and optional event responders
+            </summary>
+            <param name="config">Instance configuration options</param>
+            <param name="onClear">Action invoked when this collection is cleared</param>
+            <param name="onInsert">Action invoked when an item is added to this collection</param>
+            <param name="onMove">Action invoked when an item in this collection is moved</param>
+            <param name="onRemove">Action invoked when an item is removed from this collection</param>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.#ctor(System.Collections.Generic.IEnumerable{`0},BWJ.Collections.ObservableCollectionPlusOptions,System.Action{System.Collections.Generic.IList{`0}},System.Action{`0},System.Action{`0},System.Action{`0,`0},System.Action{`0})">
+            <summary>
+            Initialization of the collection with a dataset, configuration arguments,
+            and optional event responders
+            </summary>
+            <param name="collection">The initial dataset managed by this collection</param>
+            <param name="config">Instance configuration options</param>
+            <param name="onClear">Action invoked when this collection is cleared</param>
+            <param name="onInsert">Action invoked when an item is added to this collection</param>
+            <param name="onMove">Action invoked when an item in this collection is moved</param>
+            <param name="onRemove">Action invoked when an item is removed from this collection</param>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.Load(System.Collections.Generic.IEnumerable{`0},System.Boolean)">
+            <summary>
+            Clears the previous items and reloads this collection with the given items
+            </summary>
+            <param name="collection">Collection of items to copy to this instance</param>
+            <param name="raiseMultipleEventsOnLoad">When true, will raise an event when the collection is cleared,
+            then for each item added. Otherwise only raises the reset event after the loading process completes.</param>
+            <remarks>The SuppressChangeNotification property is overriden during the execution of this method
+            when raiseMultipleEventsOnLoad is true</remarks>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.Move(System.Int32,System.Int32)">
+            <summary>
+            Move the item from a given index to a given index.
+            </summary>
+            <param name="currentIndex">Index where target item is currently located</param>
+            <param name="newIndex">Index to move target item to</param>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.Move(`0,System.Int32)">
+            <summary>
+            Move the first occurrence of the given item to the given index
+            </summary>
+            <param name="item">Item to move</param>
+            <param name="newIndex">Index to move item to</param>
+            <exception cref="T:System.ArgumentNullException">Item must not be null</exception>
+            <exception cref="T:System.ArgumentException">Item must exist in the collection</exception>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.Replace(`0,`0)">
+            <summary>
+            Replace the first occurence of the given item with the given replacement
+            </summary>
+            <param name="item">Item to replace</param>
+            <param name="replacement">Replacement item</param>
+            <exception cref="T:System.ArgumentNullException">Neither item nor replacement may be null</exception>
+            <exception cref="T:System.ArgumentException">Item must exist in the collection</exception>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.Replace(System.Func{`0,System.Boolean},`0)">
+            <summary>
+            Replaces every item matching the given predicate with the given replacement
+            </summary>
+            <returns>The items replaced</returns>
+            <exception cref="T:System.ArgumentNullException">Neither predicate nor replacement may be null</exception>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.RemoveWhere(System.Func{`0,System.Boolean})">
+            <summary>
+            Removes every item matching the given predicate from the collection
+            </summary>
+            <returns>The items removed</returns>
+            <exception cref="T:System.ArgumentNullException"></exception>
+        </member>
+        <member name="P:BWJ.Collections.ObservableCollectionPlus`1.SuppressChangeNotification">
+            <summary>
+            Prevents the <see cref="E:BWJ.Collections.ObservableCollectionPlus`1.CollectionChanged"/> and
+            <see cref="E:BWJ.Collections.ObservableCollectionPlus`1.ItemPropertyChanged"/> events from being raised when set to true
+            </summary>
+        </member>
+        <member name="P:BWJ.Collections.ObservableCollectionPlus`1.OnClear">
+            <summary>
+            An action invoked after the collection is cleared, but before a collection changed event is fired
+            </summary>
+        </member>
+        <member name="P:BWJ.Collections.ObservableCollectionPlus`1.OnInsert">
+            <summary>
+            An action invoked after an item insertion, but before a collection changed event is fired
+            </summary>
+        </member>
+        <member name="P:BWJ.Collections.ObservableCollectionPlus`1.OnMove">
+            <summary>
+            An action invoked after an item move, but before a collection changed event is fired
+            </summary>
+        </member>
+        <member name="P:BWJ.Collections.ObservableCollectionPlus`1.OnReplace">
+            <summary>
+            An action invoked after an item move, but before a collection changed event is fired
+            </summary>
+            <remarks>Input argument order is newItem, oldItem</remarks>
+            <example>(new, old) => { //logic here... }</example>
+        </member>
+        <member name="P:BWJ.Collections.ObservableCollectionPlus`1.OnRemove">
+            <summary>
+            An action invoked after an item removal, but before a collection changed event is fired
+            </summary>
+        </member>
+        <member name="E:BWJ.Collections.ObservableCollectionPlus`1.ItemPropertyChanged">
+            <summary>
+            Raised when an item in this collection raises PropertyChanged
+            </summary>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.ClearItems">
+            <summary>
+            Removes all items in the collection
+            </summary>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.RemoveItem(System.Int32)">
+            <summary>
+            Removes item at the specified index
+            </summary>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.InsertItem(System.Int32,`0)">
+            <summary>
+            Inserts item into the collection at the specified index
+            </summary>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.SetItem(System.Int32,`0)">
+            <summary>
+            Replaces the item currently at the given index with the given item
+            </summary>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.MoveItem(System.Int32,System.Int32)">
+            <summary>
+            Removes the item at an index and reinserts it at another
+            </summary>
+            <param name="currentIndex">Current index of item being moved</param>
+            <param name="newIndex">New index for item</param>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.AssertNotInEventHandler">
+            <summary>
+            Throws an exception if there is an event handler in execution
+            </summary>
+            <remarks>To be called prior to any logic that will alter this collection</remarks>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs)">
+            <summary>
+            Raises the PropertyChanged event
+            </summary>
+            <param name="e">Event arguments</param>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.OnItemPropertyChanged(System.Object,System.ComponentModel.PropertyChangedEventArgs)">
+            <summary>
+            Raises the ItemPropertyChanged event when a PropertyChanged event is raised on a collection
+            item
+            </summary>
+            <param name="e">Event arguments</param>
+            <remarks>While <see cref="P:BWJ.Collections.ObservableCollectionPlus`1.SuppressChangeNotification"/> is true, neither the 
+            CollectionChanged nor the ItemPropertyChanged events are raised</remarks>
+        </member>
+        <member name="M:BWJ.Collections.ObservableCollectionPlus`1.OnCollectionChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs)">
+            <summary>
+            Raises the CollectionChanged event
+            </summary>
+            <remarks>This method uses a counter to track invocations of event handlers.
+            This is necessary because we want to ensure that the collection is not altered
+            while event handlers are executing</remarks>
+        </member>
+        <member name="F:BWJ.Collections.ObservableCollectionPlusOptions.Default">
+            <summary>
+            Default behavior:
+             - Only one change event fires on load
+             - Custom actions can be set for execution before/after changes after instanciation
+             - Change event firing can be suspended/reenabled
+            </summary>
+        </member>
+        <member name="F:BWJ.Collections.ObservableCollectionPlusOptions.DisallowChangeResponders">
+            <summary>
+            Do not allow assignment/removal of methods invoked at collection changes after instanciation
+            </summary>
+        </member>
+        <member name="F:BWJ.Collections.ObservableCollectionPlusOptions.DisallowNotificationSuppression">
+            <summary>
+            Do not allow suspension of normal change event firing
+            </summary>
+        </member>
+        <member name="F:BWJ.Collections.ObservableCollectionPlusOptions.DisableAutoPropertyChangedSubscription">
+            <summary>
+            Do not automatically subscribe to PropertyChanged event on collection items when 
+            item type T implements INotifyPropertyChanged with a publicly accessible 
+            PropertyChanged event
+            </summary>
+        </member>
+    </members>
+</doc>
