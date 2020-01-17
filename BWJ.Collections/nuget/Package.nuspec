@@ -9,7 +9,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <projectUrl>https://github.com/byronwjones/observable-collection-plus</projectUrl>
-    <repository type="git" url="https://github.com/byronwjones/observable-collection-plus.git" branch="master" commit="e1c65e4524cd70ee6e22abe33e6cb6ec73938cb3" />
+    <repository type="git" url="https://github.com/byronwjones/observable-collection-plus.git" branch="master" commit="e15f45253a74c46af3839240fa129943779c0ab2" />
     <description>A flexible, highly-performant Collection implementing INotifyPropertyChanged and ICollectionChanged that can automatically detect changes to itself and the properties of its Items without any configuration</description>
     <summary>A flexible, highly-performant Collection implementing INotifyPropertyChanged with automatic item property change detection</summary>
     <releaseNotes>Initial Release.</releaseNotes>
