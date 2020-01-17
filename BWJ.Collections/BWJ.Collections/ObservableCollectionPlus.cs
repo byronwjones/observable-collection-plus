@@ -12,7 +12,6 @@ namespace BWJ.Collections
     /// how multithreading scenarios are managed and most importantly, the ability to reload the instance
     /// with a distinct set of data without firing events several times
     /// </summary>
-    [Serializable()]
     public class ObservableCollectionPlus<T> : Collection<T>, INotifyCollectionChanged, INotifyPropertyChanged
     {
         #region Ctors
