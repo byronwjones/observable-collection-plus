@@ -3,18 +3,22 @@
   <metadata>
     <id>BWJ.Collections.ObservableCollectionPlus</id>
     <title>ObservableCollectionPlus</title>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
     <authors>Byron W Jones</authors>
     <owners>Byron W Jones</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <projectUrl>https://github.com/byronwjones/observable-collection-plus</projectUrl>
     <repository type="git" url="https://github.com/byronwjones/observable-collection-plus.git" branch="master" commit="e15f45253a74c46af3839240fa129943779c0ab2" />
-    <description>A flexible, highly-performant Collection implementing INotifyPropertyChanged and ICollectionChanged that can automatically detect changes to itself and the properties of its Items without any configuration</description>
+    <description>A flexible, highly-performant Collection implementing INotifyPropertyChanged and INotifyCollectionChanged that can automatically detect changes to itself and the properties of its Items without any configuration</description>
     <summary>A flexible, highly-performant Collection implementing INotifyPropertyChanged with automatic item property change detection</summary>
-    <releaseNotes>Initial Release.</releaseNotes>
+    <releaseNotes>Changes in version 2.0.0:
+    Removed 'change responder' properties - actions invoked when a specific type of collection change occurs;
+    Introduced public virtual CollectionReset, ItemInserted, ItemMoved, ItemReplaced, and ItemRemoved events to allow subscribing to a specific type of collection change.  These events are not raised while change notification is suspended
+    The delegate signature for the ItemPropertyChanged event has changed; event arguments parameter is now of type ItemPropertyEventArgs (derived from PropertyEventArgs), which has the property Item (object). Item is the specific item in the collection having the property that caused the event to be raised;
+    Removed ObservableCollectionPlusOptions.DisallowChangeResponders, since change responders are no longer used</releaseNotes>
     <copyright>Copyright 2020 Byron W Jones LLC</copyright>
-    <tags>ObservableCollection INotifyPropertyChanged ICollectionChanged Collection Wpf</tags>
+    <tags>ObservableCollection INotifyPropertyChanged INotifyCollectionChanged Collection Wpf</tags>
     <dependencies>
       <group targetFramework=".NETFramework4.5">
       </group>
