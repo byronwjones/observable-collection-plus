@@ -17,7 +17,7 @@ namespace BWJ.Collections
         #region Ctors
         public ObservableCollectionPlus() : base()
         {
-            ConfigureInstance(ObservableCollectionPlusOptions.Default, null, null, null, null, null);
+            ConfigureInstance(ObservableCollectionPlusOptions.Default);
         }
 
         /// <summary>
@@ -31,26 +31,17 @@ namespace BWJ.Collections
                 throw new ArgumentNullException("collection");
             }
 
-            ConfigureInstance(ObservableCollectionPlusOptions.Default, null, null, null, null, null);
-            Load(collection);
+            ConfigureInstance(ObservableCollectionPlusOptions.Default);
+            Load(collection, false, false);
         }
 
         /// <summary>
-        /// Initialization of the collection with configuration arguments and optional event responders
+        /// Initialization of the collection with configuration arguments
         /// </summary>
         /// <param name="config">Instance configuration options</param>
-        /// <param name="onClear">Action invoked when this collection is cleared</param>
-        /// <param name="onInsert">Action invoked when an item is added to this collection</param>
-        /// <param name="onMove">Action invoked when an item in this collection is moved</param>
-        /// <param name="onRemove">Action invoked when an item is removed from this collection</param>
-        public ObservableCollectionPlus(ObservableCollectionPlusOptions config,
-            Action<IList<T>> onClear = null,
-            Action<T> onInsert = null,
-            Action<T> onMove = null,
-            Action<T, T> onReplace = null,
-            Action<T> onRemove = null)
+        public ObservableCollectionPlus(ObservableCollectionPlusOptions config)
         {
-            ConfigureInstance(config, onClear, onInsert, onMove, onReplace, onRemove);
+            ConfigureInstance(config);
         }
 
         /// <summary>
@@ -59,24 +50,15 @@ namespace BWJ.Collections
         /// </summary>
         /// <param name="collection">The initial dataset managed by this collection</param>
         /// <param name="config">Instance configuration options</param>
-        /// <param name="onClear">Action invoked when this collection is cleared</param>
-        /// <param name="onInsert">Action invoked when an item is added to this collection</param>
-        /// <param name="onMove">Action invoked when an item in this collection is moved</param>
-        /// <param name="onRemove">Action invoked when an item is removed from this collection</param>
         public ObservableCollectionPlus(IEnumerable<T> collection,
-            ObservableCollectionPlusOptions config,
-            Action<IList<T>> onClear = null,
-            Action<T> onInsert = null,
-            Action<T> onMove = null,
-            Action<T, T> onReplace = null,
-            Action<T> onRemove = null)
+            ObservableCollectionPlusOptions config)
         {
             if (collection == null)
             {
                 throw new ArgumentNullException("collection");
             }
 
-            ConfigureInstance(config, onClear, onInsert, onMove, onReplace, onRemove);
+            ConfigureInstance(config);
             Load(collection);
         }
         #endregion Ctors
@@ -95,7 +77,7 @@ namespace BWJ.Collections
         }
 
         /// <summary>
-        /// Move the item from a given index to a given index.
+        /// Move an item from a given index to a given index.
         /// </summary>
         /// <param name="currentIndex">Index where target item is currently located</param>
         /// <param name="newIndex">Index to move target item to</param>
@@ -200,7 +182,7 @@ namespace BWJ.Collections
         }
 
         /// <summary>
-        /// Prevents the <see cref="CollectionChanged"/> and
+        /// Prevents the generic <see cref="CollectionChanged"/>, specific collection change, and
         /// <see cref="ItemPropertyChanged"/> events from being raised when set to true
         /// </summary>
         public bool SuppressChangeNotification
@@ -217,105 +199,6 @@ namespace BWJ.Collections
             }
         }
 
-        #region Change event hooks
-        /// <summary>
-        /// An action invoked after the collection is cleared, but before a collection changed event is fired
-        /// </summary>
-        public Action<IList<T>> OnClear
-        {
-            get
-            {
-                return _OnClear ?? DoNothingWithList;
-            }
-            set
-            {
-                if (DisallowChangeResponders)
-                {
-                    throw new InvalidOperationException(ChangeHookEx);
-                }
-                _OnClear = value;
-            }
-        }
-
-        /// <summary>
-        /// An action invoked after an item insertion, but before a collection changed event is fired
-        /// </summary>
-        public Action<T> OnInsert
-        {
-            get
-            {
-                return _OnInsert ?? DoNothingWithItem;
-            }
-            set
-            {
-                if (DisallowChangeResponders)
-                {
-                    throw new InvalidOperationException(ChangeHookEx);
-                }
-                _OnInsert = value;
-            }
-        }
-
-        /// <summary>
-        /// An action invoked after an item move, but before a collection changed event is fired
-        /// </summary>
-        public Action<T> OnMove
-        {
-            get
-            {
-                return _OnMove ?? DoNothingWithItem;
-            }
-            set
-            {
-                if (DisallowChangeResponders)
-                {
-                    throw new InvalidOperationException(ChangeHookEx);
-                }
-                _OnMove = value;
-            }
-        }
-
-        /// <summary>
-        /// An action invoked after an item move, but before a collection changed event is fired
-        /// </summary>
-        /// <remarks>Input argument order is newItem, oldItem</remarks>
-        /// <example>(new, old) => { //logic here... }</example>
-        public Action<T, T> OnReplace
-        {
-            get
-            {
-                return _OnReplace ?? ((t, u)=>{ });
-            }
-            set
-            {
-                if (DisallowChangeResponders)
-                {
-                    throw new InvalidOperationException(ChangeHookEx);
-                }
-                _OnReplace = value;
-            }
-        }
-
-        /// <summary>
-        /// An action invoked after an item removal, but before a collection changed event is fired
-        /// </summary>
-        public Action<T> OnRemove
-        {
-            get
-            {
-                return _OnRemove ?? DoNothingWithItem;
-            }
-            set
-            {
-                if (DisallowChangeResponders)
-                {
-                    throw new InvalidOperationException(ChangeHookEx);
-                }
-                _OnRemove = value;
-            }
-        }
-        #endregion Change event hooks
-
         #region Interface implementation
         // explicitly implementing this event allows the event accessors to be overriden
         // by a protected member
@@ -331,13 +214,36 @@ namespace BWJ.Collections
             }
         }
 
+        /// <summary>
+        /// Occurs upon the alteration of the content or order of items in the collection
+        /// </summary>
         public virtual event NotifyCollectionChangedEventHandler CollectionChanged;
         #endregion Interface implementation
 
         /// <summary>
-        /// Raised when an item in this collection raises PropertyChanged
+        /// Occurs when an item in this collection raises PropertyChanged
         /// </summary>
-        public virtual event PropertyChangedEventHandler ItemPropertyChanged;
+        public virtual event ItemPropertyChangedEventHandler ItemPropertyChanged;
+        /// <summary>
+        /// Occurs when the collection is cleared or reloaded with a set of items
+        /// </summary>
+        public virtual event NotifyCollectionChangedEventHandler CollectionReset;
+        /// <summary>
+        /// Occurs when an item is added to the collection
+        /// </summary>
+        public virtual event NotifyCollectionChangedEventHandler ItemInserted;
+        /// <summary>
+        /// Occurs when an item in the collection is moved from one index to another
+        /// </summary>
+        public virtual event NotifyCollectionChangedEventHandler ItemMoved;
+        /// <summary>
+        /// Occurs when an item in the collection is replaced
+        /// </summary>
+        public virtual event NotifyCollectionChangedEventHandler ItemReplaced;
+        /// <summary>
+        /// Occurs when an item is removed from the collection
+        /// </summary>
+        public virtual event NotifyCollectionChangedEventHandler ItemRemoved;
 
         protected virtual event PropertyChangedEventHandler PropertyChanged;
 
@@ -358,7 +264,6 @@ namespace BWJ.Collections
             {
                 UnsubscribeFromItemEvents(items);
             }
-            OnClear(items);
 
             if(!SuppressChangeNotification)
             {
@@ -381,7 +286,6 @@ namespace BWJ.Collections
             {
                 UnsubscribeFromItemEvents(removed);
             }
-            OnRemove(removed);
 
             if (!SuppressChangeNotification)
             {
@@ -403,7 +307,6 @@ namespace BWJ.Collections
             {
                 SubscribeToItemEvents(item);
             }
-            OnInsert(item);
 
             if (!SuppressChangeNotification)
             {
@@ -427,7 +330,6 @@ namespace BWJ.Collections
                 UnsubscribeFromItemEvents(old);
                 SubscribeToItemEvents(item);
             }
-            OnReplace(item, old);
 
             if (!SuppressChangeNotification)
             {
@@ -449,7 +351,6 @@ namespace BWJ.Collections
 
             base.RemoveItem(currentIndex);
             base.InsertItem(newIndex, item);
-            OnMove(item);
 
             if (!SuppressChangeNotification)
             {
@@ -492,21 +393,16 @@ namespace BWJ.Collections
 
             _SuppressChangeNotification = origSuppressionState;
             
-            // we only raise the reset event when explicitly permitted to,
-            // we didn't already raise multiple events during the load process,
-            // and we are not suppressing change notifications
+            // we only raise the reset event when: a) we are explicitly permitted to,
+            // b) we didn't already raise multiple events during the load process,
+            // and c) we are not suppressing change notifications
             if(raiseResetEvent && !raiseMultipleEventsOnLoad && !SuppressChangeNotification)
             {
                 OnCollectionReset();
             }
         }
 
-        private void ConfigureInstance(ObservableCollectionPlusOptions config,
-            Action<IList<T>> onClear,
-            Action<T> onInsert,
-            Action<T> onMove,
-            Action<T, T> onReplace,
-            Action<T> onRemove)
+        private void ConfigureInstance(ObservableCollectionPlusOptions config)
         {
             Options = config;
 
@@ -522,12 +418,6 @@ namespace BWJ.Collections
                     Options |= ObservableCollectionPlusOptions.DisableAutoPropertyChangedSubscription;
                 }
             }
-
-            _OnClear = onClear;
-            _OnInsert = onInsert;
-            _OnMove = onMove;
-            _OnReplace = onReplace;
-            _OnRemove = onRemove;
         }
 
         #region Raise event methods
@@ -541,17 +431,19 @@ namespace BWJ.Collections
         }
 
         /// <summary>
-        /// Raises the ItemPropertyChanged event when a PropertyChanged event is raised on a collection
-        /// item
+        /// Delegate for the PropertyChanged event.  Raises the ItemPropertyChanged event when a
+        /// PropertyChanged event is raised on an item in the collection
         /// </summary>
+        /// <param name="item">Item raising the PropertyChanged event</param>
         /// <param name="e">Event arguments</param>
         /// <remarks>While <see cref="SuppressChangeNotification"/> is true, neither the 
         /// CollectionChanged nor the ItemPropertyChanged events are raised</remarks>
-        private void OnItemPropertyChanged(object sender, PropertyChangedEventArgs e)
+        private void OnItemPropertyChanged(object item, PropertyChangedEventArgs e)
         {
             if(!SuppressChangeNotification)
             {
-                ItemPropertyChanged?.Invoke(sender, e);
+                var args = new ItemPropertyChangedEventArgs(item, e.PropertyName);
+                ItemPropertyChanged?.Invoke(this, args);
             }
         }
         /// <summary>
@@ -593,23 +485,41 @@ namespace BWJ.Collections
 
         private void OnInsertedOrRemovedItem(bool insertedItem, T item, int index)
         {
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(
+            var args = new NotifyCollectionChangedEventArgs(
                 insertedItem ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Remove,
-                item, index));
+                item, index);
+            if(args.Action == NotifyCollectionChangedAction.Add)
+            {
+                ItemInserted?.Invoke(this, args);
+            }
+            else
+            {
+                ItemRemoved?.Invoke(this, args);
+            }
+            OnCollectionChanged(args);
         }
         private void OnMovedItem(T item, int index, int oldIndex)
         {
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move,
-                item, index, oldIndex));
+            var args = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move,
+                item, index, oldIndex);
+
+            ItemMoved?.Invoke(this, args);
+            OnCollectionChanged(args);
         }
         private void OnReplacedItem(T oldItem, T newItem, int index)
         {
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace,
-                newItem, oldItem, index));
+            var args = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace,
+                newItem, oldItem, index);
+
+            ItemReplaced?.Invoke(this, args);
+            OnCollectionChanged(args);
         }
         private void OnCollectionReset()
         {
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+            var args = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
+
+            CollectionReset?.Invoke(this, args);
+            OnCollectionChanged(args);
         }
 
         private void SubscribeToItemEvents(T item)
@@ -646,14 +556,6 @@ namespace BWJ.Collections
             return subset;
         }
 
-        private bool DisallowChangeResponders
-        {
-            get
-            {
-                return (ObservableCollectionPlusOptions.DisallowChangeResponders & Options) ==
-                    ObservableCollectionPlusOptions.DisallowChangeResponders;
-            }
-        }
         private bool DisallowNotificationSuppression
         {
             get
@@ -672,14 +574,6 @@ namespace BWJ.Collections
         }
 
         private ObservableCollectionPlusOptions Options = ObservableCollectionPlusOptions.Default;
-
-        private Action<IList<T>> DoNothingWithList = (l) => { };
-        private Action<T> DoNothingWithItem = (t) => { };
-        private Action<IList<T>> _OnClear = null;
-        private Action<T> _OnInsert = null;
-        private Action<T> _OnMove = null;
-        private Action<T,T> _OnReplace = null;
-        private Action<T> _OnRemove = null;
 
         private bool _SuppressChangeNotification = false;
 

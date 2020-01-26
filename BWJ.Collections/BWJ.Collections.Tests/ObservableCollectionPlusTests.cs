@@ -22,20 +22,6 @@ namespace BWJ.Collections.Tests
 
             Assert.ThrowsException<InvalidOperationException>(act);
         }
-
-        [TestMethod]
-        public void Test_DisallowSettingChangeRespondersAfterInstanciation()
-        {
-            var collection = new ObservableCollectionPlus<string>
-                (ObservableCollectionPlusOptions.DisallowChangeResponders,
-                onClear: (l) => { });
-
-            Action act = () => {
-                collection.OnInsert = (i) => { };
-            };
-
-            Assert.ThrowsException<InvalidOperationException>(act);
-        }
         #endregion Configuration
 
         #region Item Insertion
@@ -51,7 +37,7 @@ namespace BWJ.Collections.Tests
         }
 
         [TestMethod]
-        public void Test_FireEventOnItemInsertion()
+        public void Test_FireGeneralEventOnItemInsertion()
         {
             var collection = new ObservableCollectionPlus<string>();
             NotifyCollectionChangedAction action = NotifyCollectionChangedAction.Reset;
@@ -68,15 +54,13 @@ namespace BWJ.Collections.Tests
         }
 
         [TestMethod]
-        public void Test_InvokeResponderOnItemInsertion()
+        public void Test_FireSpecificEventOnItemInsertion()
         {
             string item = null;
-            Action<string> responder = (s) => {
-                item = s;
+            var collection = new ObservableCollectionPlus<string>(ObservableCollectionPlusOptions.Default);
+            collection.ItemInserted += (sender, e) => {
+                item = (string)e.NewItems[0];
             };
-            var collection = new ObservableCollectionPlus<string>(ObservableCollectionPlusOptions.Default,
-                onClear: null,
-                onInsert: responder);
 
             collection.Add("test");
 
@@ -108,7 +92,7 @@ namespace BWJ.Collections.Tests
         }
 
         [TestMethod]
-        public void Test_FireEventOnItemMovement()
+        public void Test_FireGeneralEventOnItemMovement()
         {
             var collection = new ObservableCollectionPlus<string>
                 (new List<string> { "foo", "bar", "baz" });
@@ -129,18 +113,15 @@ namespace BWJ.Collections.Tests
         }
 
         [TestMethod]
-        public void Test_InvokeResponderOnItemMovement()
+        public void Test_FireSpecificEventOnItemMovement()
         {
             string item = null;
-            Action<string> responder = (s) => {
-                item = s;
-            };
             var collection = new ObservableCollectionPlus<string>(
                 new List<string> { "foo", "bar", "baz" },
-                ObservableCollectionPlusOptions.Default,
-                onClear: null,
-                onInsert: null,
-                onMove: responder);
+                ObservableCollectionPlusOptions.Default);
+            collection.ItemMoved += (sender, e) => {
+                item = (string)e.NewItems[0];
+            };
 
             collection.Move(0, 2);
 
@@ -183,7 +164,7 @@ namespace BWJ.Collections.Tests
         }
 
         [TestMethod]
-        public void Test_FireEventOnItemReplacement()
+        public void Test_FireGeneralEventOnItemReplacement()
         {
             var collection = new ObservableCollectionPlus<string>
                 (new List<string> { "foo", "bar", "baz" });
@@ -203,20 +184,16 @@ namespace BWJ.Collections.Tests
         }
 
         [TestMethod]
-        public void Test_InvokeResponderOnItemReplacement()
+        public void Test_FireSpecificEventOnItemReplacement()
         {
             string oldItem = null, newItem = null;
-            Action<string, string> responder = (nu, old) => {
-                oldItem = old;
-                newItem = nu;
-            };
             var collection = new ObservableCollectionPlus<string>(
                 new List<string> { "foo", "bar", "baz" },
-                ObservableCollectionPlusOptions.Default,
-                onClear: null,
-                onInsert: null,
-                onMove: null,
-                onReplace: responder);
+                ObservableCollectionPlusOptions.Default);
+            collection.ItemReplaced += (sender, e) => {
+                oldItem = (string)e.OldItems[0];
+                newItem = (string)e.NewItems[0];
+            };
 
             collection[0] = "banana";
 
@@ -249,7 +226,7 @@ namespace BWJ.Collections.Tests
         }
         
         [TestMethod]
-        public void Test_FireEventOnItemRemoval()
+        public void Test_FireGeneralEventOnItemRemoval()
         {
             var collection = new ObservableCollectionPlus<string>
                 (new List<string> { "foo", "bar", "baz" });
@@ -267,20 +244,15 @@ namespace BWJ.Collections.Tests
         }
         
         [TestMethod]
-        public void Test_InvokeResponderOnItemRemoval()
+        public void Test_FireSpecificEventOnItemRemoval()
         {
             string removed = null;
-            Action<string> responder = (r) => {
-                removed = r;
-            };
             var collection = new ObservableCollectionPlus<string>(
                 new List<string> { "foo", "bar", "baz" },
-                ObservableCollectionPlusOptions.Default,
-                onClear: null,
-                onInsert: null,
-                onMove: null,
-                onReplace: null,
-                onRemove: responder);
+                ObservableCollectionPlusOptions.Default);
+            collection.ItemRemoved += (sender, e) => {
+                removed = (string)e.OldItems[0];
+            };
 
             collection.RemoveAt(1);
 
@@ -301,7 +273,7 @@ namespace BWJ.Collections.Tests
         }
         
         [TestMethod]
-        public void Test_FireEventOnCollectionCleared()
+        public void Test_FireGeneralEventOnCollectionCleared()
         {
             var collection = new ObservableCollectionPlus<string>
                 (new List<string> { "foo", "bar", "baz" });
@@ -316,20 +288,20 @@ namespace BWJ.Collections.Tests
         }
         
         [TestMethod]
-        public void Test_InvokeResponderOnCollectionCleared()
+        public void Test_FireSpecificEventOnCollectionCleared()
         {
-            string items = null;
-            Action<IList<string>> responder = (s) => {
-                items = string.Join(",", s);
-            };
+
             var collection = new ObservableCollectionPlus<string>(
                 new List<string> { "foo", "bar", "baz" },
-                ObservableCollectionPlusOptions.Default,
-                onClear: responder);
+                ObservableCollectionPlusOptions.Default);
+            NotifyCollectionChangedAction action = NotifyCollectionChangedAction.Add;
+            collection.CollectionReset += (sender, e) => {
+                action = e.Action;
+            };
 
             collection.Clear();
 
-            Assert.AreEqual("foo,bar,baz", items);
+            Assert.AreEqual(NotifyCollectionChangedAction.Reset, action);
         }
         #endregion Clear All Items
 

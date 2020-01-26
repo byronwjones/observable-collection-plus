@@ -6,31 +6,29 @@ using System.Threading.Tasks;
 
 namespace BWJ.Collections
 {
+    /// <summary>
+    /// ObservableCollectionPlus configuration options
+    /// </summary>
     public enum ObservableCollectionPlusOptions
     {
         /// <summary>
         /// Default behavior:
-        ///  - Only one change event fires on load
-        ///  - Custom actions can be set for execution before/after changes after instanciation
-        ///  - Change event firing can be suspended/reenabled
+        ///  - The occurence of change events can be suspended/reenabled
+        ///  - When type param T implements INotifyPropertyChanged, items are automatically configured for
+        ///  change detection
         /// </summary>
         Default = 0,
 
         /// <summary>
-        /// Do not allow assignment/removal of methods invoked at collection changes after instanciation
-        /// </summary>
-        DisallowChangeResponders = 1,
-
-        /// <summary>
         /// Do not allow suspension of normal change event firing
         /// </summary>
-        DisallowNotificationSuppression = 1 << 1,
+        DisallowNotificationSuppression = 1,
 
         /// <summary>
         /// Do not automatically subscribe to PropertyChanged event on collection items when 
         /// item type T implements INotifyPropertyChanged with a publicly accessible 
         /// PropertyChanged event
         /// </summary>
-        DisableAutoPropertyChangedSubscription = 1 << 2,
+        DisableAutoPropertyChangedSubscription = 1 << 1,
     }
 }
